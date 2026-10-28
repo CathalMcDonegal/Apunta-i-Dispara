@@ -1,0 +1,1 @@
+(()=>{const V='2026.10.28.2';try{if(localStorage.getItem('aid_ui_version')!==V){localStorage.setItem('aid_ui_version',V);location.replace(location.pathname+'?v='+encodeURIComponent(V));return}}catch(e){} const s=document.createElement('script');s.src='ui-polish.js?v='+V;document.head.appendChild(s)})();
