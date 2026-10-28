@@ -21,7 +21,8 @@
       .wallet-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.wallet-stat{padding:10px;border-radius:13px;background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.06)}.wallet-stat span{display:block;color:var(--muted);font-size:10px}.wallet-stat strong{display:block;font-size:22px;margin-top:2px}.wallet-stat.alert strong{color:#e6b65c}
       .wallet-alert{margin-top:10px;padding:10px 11px;border-radius:12px;background:rgba(211,167,44,.10);border:1px solid rgba(211,167,44,.25);font-size:11px;line-height:1.4}.wallet-alert.bad{background:rgba(185,52,43,.11);border-color:rgba(185,52,43,.3)}
       .wallet-alert b{display:block;margin-bottom:2px}.wallet-actions{display:flex;gap:8px;margin-top:10px}.wallet-actions button{flex:1}
-      @media(max-width:380px){.wallet-grid{grid-template-columns:1fr 1fr}.wallet-stat:last-child{grid-column:1/-1}}
+      .wallet-import{display:none}.wallet-summary-line{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}.wallet-summary-line span{font-size:10px;color:var(--muted);background:#1d291f;border-radius:8px;padding:5px 7px}
+      @media(max-width:380px){.wallet-grid{grid-template-columns:1fr 1fr}.wallet-stat:last-child{grid-column:1/-1}.wallet-actions{flex-direction:column}}
     `;document.head.appendChild(s);
   }
 
@@ -41,8 +42,10 @@
     if(expired.length) alertHtml+=`<div class="wallet-alert bad"><b>⚠️ ${expired.length} document${expired.length===1?'':'s'} caducat${expired.length===1?'':'s'}</b>${expired.slice(0,3).map(x=>`${esc(x.d.name)} · ${fmt(x.d.expiry)}`).join('<br>')}</div>`;
     else if(soon.length) alertHtml+=`<div class="wallet-alert"><b>⏳ ${soon.length} document${soon.length===1?'':'s'} a punt de caducar</b>${soon.slice(0,3).map(x=>`${esc(x.d.name)} · ${status(x.d.expiry)}`).join('<br>')}</div>`;
     else alertHtml='<div class="wallet-alert"><b>✓ Documentació al dia</b><span>No hi ha cap document amb caducitat dins dels pròxims 30 dies.</span></div>';
-    dash.innerHTML=`<div class="wallet-head"><div><b>🪪 Cartera del caçador</b><small>Control ràpid de documentació i equip</small></div></div><div class="wallet-grid"><div class="wallet-stat"><span>Documents</span><strong>${documents.length}</strong></div><div class="wallet-stat ${alerts.length?'alert':''}"><span>Alertes</span><strong>${alerts.length}</strong></div><div class="wallet-stat"><span>Armes</span><strong>${weapons.length}</strong></div></div>${alertHtml}<div class="wallet-actions"><button class="secondary-btn" id="exportWalletBtn">↧ Còpia de seguretat</button></div>`;
+    dash.innerHTML=`<div class="wallet-head"><div><b>🪪 Cartera del caçador</b><small>Control ràpid de documentació i equip</small></div></div><div class="wallet-grid"><div class="wallet-stat"><span>Documents</span><strong>${documents.length}</strong></div><div class="wallet-stat ${alerts.length?'alert':''}"><span>Alertes</span><strong>${alerts.length}</strong></div><div class="wallet-stat"><span>Armes</span><strong>${weapons.length}</strong></div></div>${alertHtml}<div class="wallet-summary-line"><span>🎯 Munició: ${ammo.reduce((n,a)=>n+(Number(a.quantity)||0),0)} unitats</span><span>📦 Tipus: ${ammo.length}</span></div><div class="wallet-actions"><button class="secondary-btn" id="exportWalletBtn">↧ Còpia de seguretat</button><button class="secondary-btn" id="importWalletBtn">↥ Restaurar còpia</button><input id="walletImportInput" class="wallet-import" type="file" accept="application/json,.json"></div>`;
     $('#exportWalletBtn')?.addEventListener('click',exportWallet);
+    $('#importWalletBtn')?.addEventListener('click',()=>$('#walletImportInput')?.click());
+    $('#walletImportInput')?.addEventListener('change',importWallet);
   }
 
   function render(){
@@ -72,6 +75,17 @@
   function exportWallet(){
     const data={app:'Apunta i Dispara',version:1,exportedAt:new Date().toISOString(),documents,weapons,ammo};
     const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=`apunta-i-dispara-cartera-${new Date().toISOString().slice(0,10)}.json`;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+  }
+  async function importWallet(e){
+    const file=e.target.files?.[0];if(!file)return;
+    try{
+      const data=JSON.parse(await file.text());
+      if(data?.app!=='Apunta i Dispara' || !Array.isArray(data.documents) || !Array.isArray(data.weapons) || !Array.isArray(data.ammo)) throw new Error('format');
+      if(!confirm('Això substituirà la cartera actual per la còpia seleccionada. Vols continuar?')){e.target.value='';return;}
+      documents=data.documents;weapons=data.weapons;ammo=data.ammo;
+      save(DOC_KEY,documents);save(WEAPON_KEY,weapons);save(AMMO_KEY,ammo);render();alert('Còpia restaurada correctament.');
+    }catch{alert('No s’ha pogut restaurar la còpia. Selecciona un fitxer JSON creat per Apunta i Dispara.');}
+    e.target.value='';
   }
 
   window.initDocumentsWeapons=()=>{injectWalletStyles();render();$('#addDocumentBtn')?.addEventListener('click',addDocument);$('#addWeaponBtn')?.addEventListener('click',addWeapon);$('#addAmmoBtn')?.addEventListener('click',addAmmo)};
