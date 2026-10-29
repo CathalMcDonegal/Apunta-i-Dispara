@@ -1,48 +1,84 @@
 <!doctype html>
-<html lang="ca">
-<head>
-<meta charset="utf-8">
+<html lang="ca"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#16261a">
-<meta name="description" content="Apunta i Dispara — eina de caça a Catalunya.">
-<link rel="manifest" href="manifest.json">
-<link rel="icon" href="icons/icon-192.png" type="image/png">
-<link rel="apple-touch-icon" href="icons/icon-192.png">
-<link rel="stylesheet" href="styles.css">
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-<title>Apunta i Dispara</title>
-</head>
-<body>
-<div id="app" class="app-shell">
-<header class="topbar">
-  <div class="brand-wrap"><img src="icons/icon-192.png" alt="Apunta i Dispara" class="brand-icon"><div><div class="eyebrow">CATALUNYA · CAÇA</div><h1>Apunta i Dispara</h1></div></div>
-  <button id="installBtn" class="icon-btn hidden" aria-label="Instal·lar aplicació">⇩</button>
-</header>
-<main id="main" class="main-content">
+<meta name="theme-color" content="#0f1a12"><meta name="description" content="Apunta i Dispara — eina de caça a Catalunya.">
+<link rel="manifest" href="manifest.json"><link rel="icon" href="icon-192.png"><link rel="apple-touch-icon" href="icon-192.png">
+<link rel="stylesheet" href="styles.css"><link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<title>Apunta i Dispara</title></head><body>
+<svg width="0" height="0" style="position:absolute"><defs>
+<symbol id="home" viewBox="0 0 24 24"><path d="M3 11l9-8 9 8v10h-6v-6H9v6H3z"/></symbol>
+<symbol id="target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="6"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></symbol>
+<symbol id="clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+<symbol id="book" viewBox="0 0 24 24"><path d="M5 4h11a3 3 0 013 3v13H8a3 3 0 01-3-3zM5 17a3 3 0 013-3h11"/></symbol>
+<symbol id="user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></symbol>
+<symbol id="alert" viewBox="0 0 24 24"><path d="M12 3l10 18H2zM12 10v5M12 18v.5"/></symbol>
+<symbol id="pin" viewBox="0 0 24 24"><path d="M12 21s7-6 7-12a7 7 0 10-14 0c0 6 7 12 7 12z"/><circle cx="12" cy="9" r="2.5"/></symbol>
+<symbol id="ext" viewBox="0 0 24 24"><path d="M7 17L17 7M8 7h9v9"/></symbol>
+<symbol id="chev" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></symbol>
+<symbol id="plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+<symbol id="trash" viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></symbol>
+<symbol id="scale" viewBox="0 0 24 24"><path d="M12 3v18M5 7h14M5 7l-3 7a3 3 0 006 0zM19 7l-3 7a3 3 0 006 0z"/></symbol>
+</defs></svg>
+<div class="app-shell">
+<header class="topbar"><div class="brand-wrap"><img src="icon-192.png" alt="" class="brand-icon"><div><div class="eyebrow">Catalunya</div><h1>Apunta i Dispara</h1></div></div></header>
+<main class="main-content">
 <section id="screen-home" class="screen active">
-  <div class="hero-card"><div><span class="hero-kicker">TEMPORADA 2026–27</span><h2>Caça, control i natura.</h2><p>La teva eina per preparar, registrar i revisar les jornades de caça a Catalunya.</p><div class="hero-status" id="seasonSummary">Carregant temporada…</div></div><img src="icons/icon-512.png" alt="" class="hero-logo"></div>
-  <div class="stats-grid"><article class="stat-card"><span>Jornades</span><strong id="statDays">0</strong><small>registrades</small></article><article class="stat-card"><span>Captures</span><strong id="statCaptures">0</strong><small>al teu diari</small></article><article class="stat-card"><span>Km GPS</span><strong id="statKm">0,0</strong><small>registrats</small></article></div>
-  <div class="section-title"><h3>Accés ràpid</h3></div><div class="quick-grid"><button class="quick-card" data-go="map"><span class="quick-icon">⌖</span><b>Mapa i GPS</b><small>Posició, mapa i punts</small></button><button class="quick-card" data-go="season"><span class="quick-icon">◷</span><b>Temporada</b><small>Períodes 2026–27</small></button><button class="quick-card" data-go="diary"><span class="quick-icon">▣</span><b>Diari de caça</b><small>Nova jornada</small></button><button class="quick-card" data-go="safety"><span class="quick-icon">!</span><b>Seguretat</b><small>Emergència</small></button></div>
-  <div class="section-title"><h3>Informació oficial</h3></div><div class="list-card"><a class="list-row" href="https://agricultura.gencat.cat/ca/ambits/medi-natural/casa/guia-cacador/periodes-habils-caca/" target="_blank" rel="noopener"><span>📅</span><div><b>Períodes hàbils 2026–27</b><small>Quadres oficials de la Generalitat</small></div><i>↗</i></a><a class="list-row" href="https://agricultura.gencat.cat/ca/ambits/medi-natural/casa/terrenys-cinegetics/" target="_blank" rel="noopener"><span>🗺️</span><div><b>Terrenys cinegètics</b><small>Àrees, reserves i zones de caça</small></div><i>↗</i></a><a class="list-row" href="https://agricultura.gencat.cat/ca/ambits/medi-natural/casa/normativa/" target="_blank" rel="noopener"><span>📖</span><div><b>Normativa de caça</b><small>Fonts oficials actualitzades</small></div><i>↗</i></a><button class="list-row" data-go="profile"><span>👤</span><div><b>Perfil, llicències i equip</b><small>Documents, armes i munició</small></div><i>›</i></button></div>
+<div class="hero-card"><div><span class="hero-kicker">Temporada 2026–27</span><h2>Caça, control i natura.</h2><p>Prepara, registra i revisa les teves jornades.</p><div class="hero-status" id="seasonSummary"></div></div><img src="icon-512.png" alt="" class="hero-logo"></div>
+<div class="stats-grid"><article class="stat-card"><span>Jornades</span><strong id="statDays">0</strong><small>registrades</small></article><article class="stat-card"><span>Captures</span><strong id="statCaptures">0</strong><small>al diari</small></article><article class="stat-card"><span>Km GPS</span><strong id="statKm">0</strong><small>recorreguts</small></article></div>
+<div class="section-title"><h3>Accés ràpid</h3></div>
+<div class="quick-grid">
+<button class="quick-card" data-go="map"><span class="quick-icon"><svg class="i"><use href="#target"/></svg></span><b>Mapa i GPS</b><small>Posició i punts</small></button>
+<button class="quick-card" data-go="diary"><span class="quick-icon"><svg class="i"><use href="#book"/></svg></span><b>Diari de caça</b><small>Nova jornada</small></button>
+<button class="quick-card" data-go="season"><span class="quick-icon"><svg class="i"><use href="#clock"/></svg></span><b>Temporada</b><small>Espècies i períodes</small></button>
+<button class="quick-card" data-go="safety"><span class="quick-icon"><svg class="i"><use href="#alert"/></svg></span><b>Seguretat</b><small>Emergència 112</small></button></div>
+<div class="section-title"><h3>Informació oficial</h3></div>
+<div class="list-card">
+<a class="list-row" href="https://agricultura.gencat.cat/ca/ambits/medi-natural/casa/guia-cacador/periodes-habils-caca/" target="_blank" rel="noopener"><span><svg class="i"><use href="#clock"/></svg></span><div><b>Períodes hàbils 2026–27</b><small>Quadres oficials de la Generalitat</small></div><svg class="i"><use href="#ext"/></svg></a>
+<a class="list-row" href="https://agricultura.gencat.cat/ca/ambits/medi-natural/casa/terrenys-cinegetics/" target="_blank" rel="noopener"><span><svg class="i"><use href="#pin"/></svg></span><div><b>Terrenys cinegètics</b><small>Àrees, reserves i zones de caça</small></div><svg class="i"><use href="#ext"/></svg></a>
+<button class="list-row" data-go="rules"><span><svg class="i"><use href="#scale"/></svg></span><div><b>Normativa</b><small>Fonts oficials</small></div><svg class="i"><use href="#chev"/></svg></button></div>
 </section>
-<section id="screen-map" class="screen"><div class="screen-head"><div><span class="eyebrow">ORIENTACIÓ</span><h2>Mapa i GPS</h2></div><button id="locateBtn" class="primary-btn">Obtenir posició</button></div><div class="gps-card"><div class="compass">N</div><div><b id="gpsStatus">Posició no obtinguda</b><small id="gpsCoords">Activa el GPS per veure les coordenades.</small></div></div><div id="leafletMap" class="real-map"></div><div class="map-actions"><button class="secondary-btn" id="trackBtn">▶ Iniciar seguiment</button><button class="secondary-btn" id="savePointBtn">＋ Guardar punt</button></div><div class="weather-card"><div class="weather-symbol">☁</div><div><b>Temps a la teva posició</b><div id="weatherText"><small>Obté primer la posició GPS.</small></div></div></div><div class="list-card compact"><div class="list-row static"><span>📍</span><div><b>Punts guardats</b><small id="savedPointsText">Encara no n'hi ha cap.</small></div></div></div></section>
-<section id="screen-season" class="screen"><div class="screen-head"><div><span class="eyebrow">CALENDARI</span><h2>Temporada 2026–27</h2></div></div><div class="notice"><b>Font oficial</b><p>Dates basades en els quadres resum de la Resolució ARP/2305/2026, de 6 de juliol. Són informatives: el PTGC de cada terreny pot concretar espècies, modalitats i dies autoritzats.</p></div><div class="filter-row"><button class="filter active">Totes</button><button class="filter">Caça major</button><button class="filter">Caça menor</button></div><div id="seasonList" class="cards-list"></div></section>
-<section id="screen-species" class="screen"><div class="screen-head"><div><span class="eyebrow">GUIA</span><h2>Espècies</h2></div></div><div class="search-box"><span>⌕</span><input id="speciesSearch" placeholder="Cerca una espècie…" autocomplete="off"></div><div id="speciesList" class="species-list"></div></section>
-<section id="screen-diary" class="screen"><div class="screen-head"><div><span class="eyebrow">REGISTRE</span><h2>Diari de caça</h2></div><button id="newDiaryBtn" class="primary-btn">＋ Nova</button></div><div id="diaryList" class="diary-list"></div><div id="diaryEmpty" class="empty-state"><span>▣</span><h3>Encara no tens jornades</h3><p>Registra la primera jornada i conserva les dades al teu dispositiu.</p><button class="primary-btn" id="emptyNewDiary">Crear jornada</button></div></section>
-<section id="screen-rules" class="screen"><div class="screen-head"><div><span class="eyebrow">LEGAL</span><h2>Normativa</h2></div></div><div class="notice"><b>Consulta sempre la font oficial</b><p>Les dates i condicions poden variar segons terreny, comarca, modalitat i autoritzacions. Apunta i Dispara no substitueix la normativa.</p></div><div class="list-card"><a class="list-row" href="https://agricultura.gencat.cat/ca/ambits/medi-natural/casa/normativa/" target="_blank" rel="noopener"><span>🏛️</span><div><b>Generalitat — Normativa</b><small>Normativa catalana de caça</small></div><i>↗</i></a><a class="list-row" href="https://dogc.gencat.cat/" target="_blank" rel="noopener"><span>📜</span><div><b>DOGC</b><small>Diari Oficial de la Generalitat</small></div><i>↗</i></a><a class="list-row" href="https://agricultura.gencat.cat/ca/ambits/medi-natural/casa/guia-cacador/periodes-habils-caca/" target="_blank" rel="noopener"><span>📅</span><div><b>Períodes hàbils</b><small>Temporada 2026–27</small></div><i>↗</i></a></div></section>
-<section id="screen-safety" class="screen"><div class="screen-head"><div><span class="eyebrow">SEGURETAT</span><h2>Emergència</h2></div></div><div class="emergency-card"><span>112</span><p>Emergències</p><a href="tel:112" class="emergency-btn">TRUCAR AL 112</a></div><div class="list-card"><button class="list-row" id="shareLocationBtn"><span>📍</span><div><b>Compartir ubicació</b><small>Envia un enllaç amb les coordenades GPS</small></div><i>›</i></button><div class="list-row static"><span>⚠️</span><div><b>Seguretat bàsica</b><small>Identifica sempre l'objectiu i el fons, respecta les zones de seguretat i segueix la normativa vigent.</small></div></div></div></section>
-<section id="screen-profile" class="screen"><div class="screen-head"><div><span class="eyebrow">PERSONAL</span><h2>Perfil i documentació</h2></div></div><div class="profile-card"><img src="icons/icon-192.png" alt=""><div><b>Apunta i Dispara</b><small>Dades guardades només en aquest dispositiu.</small></div></div><div class="form-card"><label>Nom<input id="profileName" placeholder="El teu nom"></label><label>Núm. llicència de caça<input id="profileLicense" placeholder="Opcional"></label><label>Assegurança<input id="profileInsurance" placeholder="Opcional"></label><label>Caducitat assegurança<input id="profileInsuranceExpiry" type="date"></label><button id="saveProfileBtn" class="primary-btn full">Guardar perfil</button></div><div class="account-section"><h3>📄 Llicències i documents</h3><div class="record-form form-card"><label>Tipus de document<input id="docName" placeholder="Llicència d'armes, caça, assegurança, permís…"></label><div class="two-col"><label>Número<input id="docNumber" placeholder="Opcional"></label><label>Caducitat<input id="docExpiry" type="date"></label></div><button id="addDocumentBtn" class="secondary-btn">＋ Afegir document</button></div><div id="documentsList" class="record-list"></div></div><div class="account-section"><h3>🔫 Armes disponibles</h3><div class="record-form form-card"><label>Nom / arma<input id="weaponName" placeholder="Ex.: escopeta, rifle…"></label><div class="two-col"><label>Tipus<select id="weaponType"><option>Escopeta</option><option>Rifle</option><option>Carabina</option><option>Altres</option></select></label><label>Calibre<input id="weaponCaliber" placeholder="Opcional"></label></div><label>Identificador / matrícula<input id="weaponIdentifier" placeholder="Opcional"></label><button id="addWeaponBtn" class="secondary-btn">＋ Afegir arma</button></div><div id="weaponsList" class="record-list"></div></div><div class="account-section"><h3>🎯 Munició</h3><div class="record-form form-card"><label>Tipus / descripció<input id="ammoName" placeholder="Ex.: cartutxos, munició de rifle…"></label><div class="two-col"><label>Calibre<input id="ammoCaliber" placeholder="Opcional"></label><label>Quantitat<input id="ammoQuantity" type="number" min="0" value="0"></label></div><button id="addAmmoBtn" class="secondary-btn">＋ Afegir munició</button></div><div id="ammoList" class="record-list"></div></div><p class="privacy-note">Aquesta informació es desa localment al dispositiu. L'app no envia aquestes dades a cap servidor. No utilitzis aquest apartat com a substitut de la documentació oficial.</p></section>
+<section id="screen-map" class="screen"><div class="screen-head"><div><span class="eyebrow">Orientació</span><h2>Mapa i GPS</h2></div><button id="locateBtn" class="primary-btn">Ubica'm</button></div>
+<div class="gps-card"><div class="compass">N</div><div><b id="gpsStatus">Posició no obtinguda</b><small id="gpsCoords">Prem «Ubica'm» per activar el GPS.</small></div></div>
+<div id="leafletMap" class="real-map"></div>
+<div class="map-actions"><button class="secondary-btn" id="trackBtn">Iniciar recorregut</button><button class="secondary-btn" id="savePointBtn"><svg class="i"><use href="#plus"/></svg> Guardar punt</button></div>
+<div class="weather-card"><div><b>Temps a la teva posició</b><small id="weatherText">Ubica't primer.</small></div></div>
+<div class="section-title"><h3>Punts guardats</h3></div><div id="pointsList" class="record-list"></div></section>
+<section id="screen-season" class="screen"><div class="screen-head"><div><span class="eyebrow">Calendari</span><h2>Temporada 2026–27</h2></div></div>
+<div class="notice"><b>Consulta sempre la font oficial</b><p>Les dates varien segons terreny, modalitat i autoritzacions (PTGC). Mira els <a href="https://agricultura.gencat.cat/ca/ambits/medi-natural/casa/guia-cacador/periodes-habils-caca/" target="_blank" rel="noopener" style="color:var(--blaze)">quadres oficials</a>.</p></div>
+<div class="search-box"><svg class="i"><use href="#target"/></svg><input id="speciesSearch" placeholder="Cerca una espècie…" autocomplete="off"></div>
+<div class="filter-row"><button class="filter active" data-f="all">Totes</button><button class="filter" data-f="major">Caça major</button><button class="filter" data-f="menor">Caça menor</button></div>
+<div id="seasonList" class="cards-list"></div></section>
+<section id="screen-diary" class="screen"><div class="screen-head"><div><span class="eyebrow">Registre</span><h2>Diari de caça</h2></div><button id="newDiaryBtn" class="primary-btn"><svg class="i"><use href="#plus"/></svg> Nova</button></div>
+<div id="diaryList" class="diary-list"></div>
+<div id="diaryEmpty" class="empty-state"><h3>Encara no tens jornades</h3><p>Registra la primera i queda desada al teu dispositiu.</p><button class="primary-btn" id="emptyNewDiary">Crear jornada</button></div></section>
+<section id="screen-rules" class="screen"><div class="screen-head"><div><span class="eyebrow">Legal</span><h2>Normativa</h2></div></div>
+<div class="notice"><b>Aquesta app no substitueix la normativa</b><p>Dates i condicions poden variar segons terreny, comarca i modalitat.</p></div>
+<div class="list-card">
+<a class="list-row" href="https://agricultura.gencat.cat/ca/ambits/medi-natural/casa/normativa/" target="_blank" rel="noopener"><span><svg class="i"><use href="#scale"/></svg></span><div><b>Generalitat — Normativa</b><small>Normativa catalana de caça</small></div><svg class="i"><use href="#ext"/></svg></a>
+<a class="list-row" href="https://dogc.gencat.cat/" target="_blank" rel="noopener"><span><svg class="i"><use href="#book"/></svg></span><div><b>DOGC</b><small>Diari Oficial de la Generalitat</small></div><svg class="i"><use href="#ext"/></svg></a></div></section>
+<section id="screen-safety" class="screen"><div class="screen-head"><div><span class="eyebrow">Seguretat</span><h2>Emergència</h2></div></div>
+<div class="emergency-card"><span>112</span><p>Emergències</p><a href="tel:112" class="emergency-btn">Truca al 112</a></div>
+<div class="list-card"><button class="list-row" id="shareLocationBtn"><span><svg class="i"><use href="#pin"/></svg></span><div><b>Compartir ubicació</b><small>Envia les coordenades GPS</small></div><svg class="i"><use href="#chev"/></svg></button>
+<div class="list-row"><span><svg class="i"><use href="#alert"/></svg></span><div><b>Seguretat bàsica</b><small>Identifica l'objectiu i el fons, respecta les zones de seguretat i segueix la normativa.</small></div></div></div></section>
+<section id="screen-profile" class="screen"><div class="screen-head"><div><span class="eyebrow">Personal</span><h2>Perfil i equip</h2></div></div>
+<div class="form-card"><label>Nom<input id="pName"></label><label>Núm. llicència de caça<input id="pLicense"></label><label>Assegurança<input id="pIns"></label><label>Caducitat assegurança<input id="pInsExp" type="date"></label><button id="saveProfileBtn" class="primary-btn full">Guardar perfil</button></div>
+<div class="account-section"><h3>Documents</h3><div class="form-card"><label>Tipus<input id="docName" placeholder="Llicència d'armes, permís…"></label><div class="two-col"><label>Número<input id="docNumber"></label><label>Caducitat<input id="docExpiry" type="date"></label></div><button id="addDocBtn" class="secondary-btn">Afegir document</button></div><div id="docsList" class="record-list"></div></div>
+<div class="account-section"><h3>Armes</h3><div class="form-card"><label>Nom<input id="wName"></label><div class="two-col"><label>Tipus<select id="wType"><option>Escopeta</option><option>Rifle</option><option>Carabina</option><option>Altres</option></select></label><label>Calibre<input id="wCal"></label></div><label>Identificador<input id="wId"></label><button id="addWeaponBtn" class="secondary-btn">Afegir arma</button></div><div id="weaponsList" class="record-list"></div></div>
+<div class="account-section"><h3>Munició</h3><div class="form-card"><label>Descripció<input id="aName"></label><div class="two-col"><label>Calibre<input id="aCal"></label><label>Quantitat<input id="aQty" type="number" min="0" value="0"></label></div><button id="addAmmoBtn" class="secondary-btn">Afegir munició</button></div><div id="ammoList" class="record-list"></div></div>
+<p class="privacy-note">Les dades es desen només en aquest dispositiu. No s'envien a cap servidor.</p></section>
 </main>
-<nav class="bottom-nav" aria-label="Navegació principal"><button class="nav-item active" data-screen="home"><span>⌂</span><small>Inici</small></button><button class="nav-item" data-screen="map"><span>⌖</span><small>Mapa</small></button><button class="nav-item" data-screen="season"><span>◷</span><small>Temporada</small></button><button class="nav-item" data-screen="species"><span>🐾</span><small>Espècies</small></button><button class="nav-item" data-screen="profile"><span>◉</span><small>Perfil</small></button></nav>
-</div>
+<nav class="bottom-nav">
+<button class="nav-item active" data-screen="home"><span><svg class="i"><use href="#home"/></svg></span><small>Inici</small></button>
+<button class="nav-item" data-screen="map"><span><svg class="i"><use href="#target"/></svg></span><small>Mapa</small></button>
+<button class="nav-item" data-screen="diary"><span><svg class="i"><use href="#book"/></svg></span><small>Diari</small></button>
+<button class="nav-item" data-screen="season"><span><svg class="i"><use href="#clock"/></svg></span><small>Temporada</small></button>
+<button class="nav-item" data-screen="profile"><span><svg class="i"><use href="#user"/></svg></span><small>Perfil</small></button></nav></div>
 <div id="toast" class="toast" role="status"></div>
-<div id="diaryModal" class="modal hidden" aria-hidden="true"><div class="modal-card"><div class="modal-head"><h3>Nova jornada</h3><button id="closeDiary">×</button></div><label>Data<input id="diaryDate" type="date"></label><label>Zona<input id="diaryZone" placeholder="Municipi / zona de caça"></label><label>Modalitat<select id="diaryMode"><option>Espera</option><option>Batuda</option><option>Aproximació</option><option>Al salt</option><option>Altres</option></select></label><div class="two-col"><label>Captures<input id="diaryCaptures" type="number" min="0" value="0"></label><label>Km GPS<input id="diaryKm" type="number" min="0" step="0.1" value="0"></label></div><label>Notes<textarea id="diaryNotes" rows="4" placeholder="Observacions…"></textarea></label><button id="saveDiaryBtn" class="primary-btn full">Guardar jornada</button></div></div>
+<div id="diaryModal" class="modal hidden"><div class="modal-card"><div class="modal-head"><h3>Nova jornada</h3><button id="closeDiary" aria-label="Tanca">×</button></div>
+<label>Data<input id="dDate" type="date"></label><label>Zona<input id="dZone" placeholder="Municipi / zona de caça"></label>
+<label>Modalitat<select id="dMode"><option>Espera</option><option>Batuda</option><option>Aproximació</option><option>Al salt</option><option>Altres</option></select></label>
+<div class="two-col"><label>Captures<input id="dCap" type="number" min="0" value="0"></label><label>Km GPS<input id="dKm" type="number" min="0" step="0.1" value="0"></label></div>
+<label>Notes<textarea id="dNotes" rows="3"></textarea></label><button id="saveDiaryBtn" class="primary-btn full">Guardar jornada</button></div></div>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="app.js"></script>
-<script src="documents-weapons.js"></script>
-<script src="hunting-map.js"></script>
-<script src="ui-polish.js"></script>
-<script>
-if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
-</script>
+<script src="data.js"></script><script src="app.js"></script>
 </body></html>

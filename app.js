@@ -1,160 +1,73 @@
-const $ = (s) => document.querySelector(s);
-const $$ = (s) => [...document.querySelectorAll(s)];
-
-const OFFICIAL = {
-  hunting: 'https://agricultura.gencat.cat/ca/ambits/medi-natural/casa/guia-cacador/periodes-habils-caca/',
-  rules: 'https://agricultura.gencat.cat/ca/ambits/medi-natural/casa/normativa/',
-  zones: 'https://agricultura.gencat.cat/ca/ambits/medi-natural/casa/terrenys-cinegetics/',
-  dogc: 'https://dogc.gencat.cat/'
-};
-
-const species = [
-  {name:'Senglar',icon:'🐗',type:'Caça major',start:'2026-06-01',end:'2027-05-31',note:'Períodes i modalitats segons terreny i PTGC.'},
-  {name:'Cabirol',icon:'🦌',type:'Caça major',start:'2026-09-06',end:'2027-08-15',note:'Pot requerir permís segons modalitat i territori.'},
-  {name:'Cérvol',icon:'🦌',type:'Caça major',start:'2026-09-13',end:'2027-02-28',note:'Permís i precinte en els supòsits previstos.'},
-  {name:'Isard',icon:'🏔️',type:'Caça major',start:null,end:null,note:'Regulat segons reserves i zones de gestió pública.'},
-  {name:'Cabra salvatge',icon:'🐐',type:'Caça major',start:'2026-10-11',end:'2027-05-31',note:'Permís i precinte en els supòsits previstos.'},
-  {name:'Mufló',icon:'🐏',type:'Caça major',start:'2026-09-06',end:'2027-03-28',note:'Consulta el PTGC i la normativa aplicable al terreny.'},
-  {name:'Gamo',icon:'🦌',type:'Caça major',start:'2026-09-06',end:'2027-03-28',note:'Consulta el PTGC i la normativa aplicable al terreny.'},
-  {name:'Guineu',icon:'🦊',type:'Caça menor',start:'2026-09-06',end:'2027-03-28',note:'Hi ha limitacions territorials específiques.'},
-  {name:'Conill',icon:'🐇',type:'Caça menor',start:'2026-10-11',end:'2027-02-07',note:'En determinats territoris pot tenir règims específics.'},
-  {name:'Perdiu roja',icon:'🐦',type:'Caça menor',start:'2026-10-11',end:'2027-01-03',note:'Consulta també les limitacions de captures i terreny.'},
-  {name:'Perdiu xerra de muntanya',icon:'🐦',type:'Caça menor',start:'2026-10-11',end:'2026-12-27',note:'Màxims i obligacions específiques segons la normativa.'},
-  {name:'Tord comú',icon:'🐦',type:'Caça menor',start:'2026-10-11',end:'2027-02-14',note:'Període general de caça menor.'},
-  {name:'Tord ala-roig',icon:'🐦',type:'Caça menor',start:'2026-10-11',end:'2027-02-14',note:'Període general de caça menor.'},
-  {name:'Griva',icon:'🐦',type:'Caça menor',start:'2026-10-11',end:'2027-01-31',note:'Període general de caça menor.'},
-  {name:'Becada',icon:'🐦',type:'Caça menor',start:'2026-10-11',end:'2027-02-07',note:'Màxims de captures i prohibició de caça a l’aguait.'},
-  {name:'Becadell comú',icon:'🐦',type:'Caça menor',start:'2026-10-11',end:'2027-02-21',note:'Només en territoris autoritzats segons la resolució.'},
-  {name:'Ànec collverd',icon:'🦆',type:'Caça menor',start:'2026-10-11',end:'2027-03-07',note:'Règim específic a les Terres de l’Ebre.'},
-  {name:'Tudó',icon:'🕊️',type:'Caça menor',start:'2026-10-11',end:'2027-02-07',note:'Pot tenir règims territorials específics.'},
-  {name:'Faisà',icon:'🪶',type:'Caça menor',start:'2026-10-11',end:'2027-02-07',note:'Consulta la regulació del terreny cinegètic.'}
-];
-
-const state = {
-  screen: localStorage.getItem('aid_screen') || 'home',
-  diary: JSON.parse(localStorage.getItem('aid_diary') || '[]'),
-  points: JSON.parse(localStorage.getItem('aid_points') || '[]'),
-  profile: JSON.parse(localStorage.getItem('aid_profile') || '{}'),
-  coords: null,
-  deferredInstall: null,
-  map: null,
-  marker: null
-};
-
-function save(key,value){ localStorage.setItem(key,JSON.stringify(value)); }
-function escapeHtml(v){return String(v??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));}
-function toast(message){const el=$('#toast');el.textContent=message;el.classList.add('show');clearTimeout(window.__toast);window.__toast=setTimeout(()=>el.classList.remove('show'),2500);}
-function today(){return new Date().toISOString().slice(0,10);}
-function formatDate(v){if(!v)return '';const d=new Date(v+'T12:00:00');return new Intl.DateTimeFormat('ca-ES',{day:'2-digit',month:'2-digit',year:'numeric'}).format(d);}
-function isOpen(s){const d=today();return !!(s.start&&s.end&&d>=s.start&&d<=s.end);}
-function seasonLabel(s){if(!s.start||!s.end)return 'Consultar normativa';return isOpen(s)?'EN PERÍODE HÀBIL':'Fora de període';}
-
-function go(screen){
-  state.screen=screen;save('aid_screen',screen);
-  $$('.screen').forEach(s=>s.classList.toggle('active',s.id===`screen-${screen}`));
-  $$('.nav-item').forEach(n=>n.classList.toggle('active',n.dataset.screen===screen));
-  window.scrollTo({top:0,behavior:'smooth'});
-  if(screen==='diary')renderDiary();
-  if(screen==='map')setTimeout(initMap,50);
-  if(screen==='profile')loadProfile();
-}
-$$('[data-screen]').forEach(b=>b.addEventListener('click',()=>go(b.dataset.screen)));
-$$('[data-go]').forEach(b=>b.addEventListener('click',()=>go(b.dataset.go)));
-
-function renderStats(){
-  $('#statDays').textContent=state.diary.length;
-  $('#statCaptures').textContent=state.diary.reduce((n,d)=>n+(Number(d.captures)||0),0);
-  $('#statKm').textContent=state.diary.reduce((n,d)=>n+(Number(d.km)||0),0).toFixed(1).replace('.',',');
-}
-function renderSpecies(filter=''){
-  const q=filter.trim().toLowerCase();
-  const list=species.filter(s=>!q||`${s.name} ${s.type} ${s.note}`.toLowerCase().includes(q));
-  $('#speciesList').innerHTML=list.map(s=>`<article class="species-card"><div class="animal-icon">${s.icon}</div><div><b>${s.name}</b><small>${s.type}</small><small>${s.note}</small><span class="species-status ${isOpen(s)?'open':''}">${seasonLabel(s)}</span></div></article>`).join('');
-}
-function renderSeason(filter='Totes'){
-  const list=species.filter(s=>filter==='Totes'||(filter==='Caça major'&&s.type==='Caça major')||(filter==='Caça menor'&&s.type==='Caça menor'));
-  $('#seasonList').innerHTML=list.map(s=>`<article class="season-card"><div class="animal-icon">${s.icon}</div><div><b>${s.name}</b><small>${s.type}${s.start?` · ${formatDate(s.start)} → ${formatDate(s.end)}`:''}</small><small>${s.note}</small></div><span class="badge ${isOpen(s)?'open':''}">${seasonLabel(s)}</span></article>`).join('');
-}
-function renderDiary(){
-  const list=$('#diaryList'),empty=$('#diaryEmpty');
-  empty.style.display=state.diary.length?'none':'block';
-  list.innerHTML=state.diary.slice().reverse().map((d,i)=>`<article class="diary-card"><div class="diary-top"><div><b>${escapeHtml(d.zone||'Jornada sense zona')}</b><small>${formatDate(d.date)} · ${escapeHtml(d.mode||'Modalitat no indicada')}</small></div><button class="delete-diary" data-delete="${state.diary.length-1-i}" aria-label="Eliminar jornada">×</button></div><div class="meta"><span>Captures: ${Number(d.captures)||0}</span><span>Km: ${(Number(d.km)||0).toFixed(1)}</span>${d.notes?`<span>${escapeHtml(d.notes)}</span>`:''}</div></article>`).join('');
-  $$('.delete-diary').forEach(b=>b.addEventListener('click',()=>{state.diary.splice(Number(b.dataset.delete),1);save('aid_diary',state.diary);renderDiary();renderStats();toast('Jornada eliminada');}));
-}
-function openDiary(){
-  $('#diaryDate').value=today();$('#diaryZone').value='';$('#diaryNotes').value='';$('#diaryMode').value='Espera';$('#diaryCaptures').value='0';$('#diaryKm').value='0';
-  $('#diaryModal').classList.remove('hidden');$('#diaryModal').setAttribute('aria-hidden','false');
-}
-function closeDiary(){$('#diaryModal').classList.add('hidden');$('#diaryModal').setAttribute('aria-hidden','true');}
-$('#newDiaryBtn').addEventListener('click',openDiary);$('#emptyNewDiary').addEventListener('click',openDiary);$('#closeDiary').addEventListener('click',closeDiary);
-$('#diaryModal').addEventListener('click',e=>{if(e.target.id==='diaryModal')closeDiary();});
-$('#saveDiaryBtn').addEventListener('click',()=>{
-  const item={date:$('#diaryDate').value||today(),zone:$('#diaryZone').value.trim(),mode:$('#diaryMode').value,notes:$('#diaryNotes').value.trim(),captures:Number($('#diaryCaptures').value)||0,km:Number($('#diaryKm').value)||0};
-  state.diary.push(item);save('aid_diary',state.diary);closeDiary();renderDiary();renderStats();toast('Jornada guardada');
-});
-$('#speciesSearch').addEventListener('input',e=>renderSpecies(e.target.value));
-$$('.filter').forEach(b=>b.addEventListener('click',()=>{$$('.filter').forEach(x=>x.classList.remove('active'));b.classList.add('active');renderSeason(b.textContent.trim());}));
-
-let watchId=null;
-function updateLocation(pos){
-  state.coords={lat:pos.coords.latitude,lon:pos.coords.longitude,accuracy:pos.coords.accuracy};
-  $('#gpsStatus').textContent='Posició obtinguda';
-  $('#gpsCoords').textContent=`${state.coords.lat.toFixed(6)}, ${state.coords.lon.toFixed(6)} · ±${Math.round(state.coords.accuracy)} m`;
-  if(state.map){state.map.setView([state.coords.lat,state.coords.lon],14);if(state.marker)state.marker.setLatLng([state.coords.lat,state.coords.lon]);else state.marker=L.marker([state.coords.lat,state.coords.lon]).addTo(state.map).bindPopup('La teva posició');}
-}
-function getPosition(callback){
-  if(!navigator.geolocation){toast('Aquest dispositiu no ofereix geolocalització');return;}
-  $('#gpsStatus').textContent='Buscant posició…';
-  navigator.geolocation.getCurrentPosition(p=>{updateLocation(p);if(callback)callback();toast('GPS actualitzat');},err=>{$('#gpsStatus').textContent='No s’ha pogut obtenir la posició';$('#gpsCoords').textContent=err.code===1?'Permís de localització denegat.':'Torna-ho a provar en un lloc amb millor senyal.';toast('No s’ha pogut obtenir el GPS');},{enableHighAccuracy:true,timeout:12000,maximumAge:30000});
-}
-$('#locateBtn').addEventListener('click',()=>getPosition(()=>loadWeather()));
-$('#trackBtn')?.addEventListener('click',()=>{
-  if(!navigator.geolocation){toast('GPS no disponible');return;}
-  if(watchId){navigator.geolocation.clearWatch(watchId);watchId=null;$('#trackBtn').textContent='▶ Iniciar seguiment';toast('Seguiment aturat');return;}
-  watchId=navigator.geolocation.watchPosition(updateLocation,()=>toast('Error de GPS'),{enableHighAccuracy:true,maximumAge:3000,timeout:10000});
-  $('#trackBtn').textContent='■ Aturar seguiment';toast('Seguiment GPS actiu');
-});
-$('#savePointBtn').addEventListener('click',()=>{
-  if(!state.coords){toast('Primer obtén la teva posició');return;}
-  state.points.push({...state.coords,created:new Date().toISOString(),name:`Punt ${state.points.length+1}`});save('aid_points',state.points);renderPoints();toast('Punt guardat');
-});
-function renderPoints(){const el=$('#savedPointsText');el.textContent=state.points.length?`${state.points.length} punt${state.points.length===1?'':'s'} guardat${state.points.length===1?'':'s'}.`:'Encara no n’hi ha cap.';}
-
-function initMap(){
-  if(state.map||!window.L)return;
-  state.map=L.map('leafletMap',{zoomControl:false}).setView([41.75,1.75],8);
-  L.control.zoom({position:'bottomright'}).addTo(state.map);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(state.map);
-  if(state.coords)updateLocation({coords:state.coords});
-}
-$('#shareLocationBtn').addEventListener('click',async()=>{if(!state.coords){getPosition(()=>shareCoords());return;}shareCoords();});
-async function shareCoords(){
-  const text=`La meva ubicació — Apunta i Dispara: https://maps.google.com/?q=${state.coords.lat},${state.coords.lon}`;
-  if(navigator.share){try{await navigator.share({title:'Ubicació — Apunta i Dispara',text});}catch{}}
-  else if(navigator.clipboard){await navigator.clipboard.writeText(text);toast('Enllaç d’ubicació copiat');}
-}
-
-async function loadWeather(){
-  if(!state.coords)return;
-  const el=$('#weatherText');if(!el)return;el.textContent='Actualitzant…';
-  try{
-    const u=`https://api.open-meteo.com/v1/forecast?latitude=${state.coords.lat}&longitude=${state.coords.lon}&current=temperature_2m,wind_speed_10m,precipitation&daily=sunrise,sunset&timezone=auto`;
-    const r=await fetch(u);if(!r.ok)throw new Error();
-    const d=await r.json(),c=d.current;
-    el.innerHTML=`<b>${Math.round(c.temperature_2m)}°C</b><span>Vent ${Math.round(c.wind_speed_10m)} km/h · Pluja ${Number(c.precipitation||0).toFixed(1)} mm</span><small>Sortida ${new Date(d.daily.sunrise[0]).toLocaleTimeString('ca-ES',{hour:'2-digit',minute:'2-digit'})} · Posta ${new Date(d.daily.sunset[0]).toLocaleTimeString('ca-ES',{hour:'2-digit',minute:'2-digit'})}</small>`;
-  }catch{el.innerHTML='<small>No disponible ara. Comprova la connexió.</small>';}
-}
-
-$('#saveProfileBtn').addEventListener('click',()=>{
-  state.profile={name:$('#profileName').value.trim(),license:$('#profileLicense').value.trim(),insurance:$('#profileInsurance').value.trim(),insuranceExpiry:$('#profileInsuranceExpiry').value};
-  save('aid_profile',state.profile);toast('Perfil guardat');
-});
-function loadProfile(){$('#profileName').value=state.profile.name||'';$('#profileLicense').value=state.profile.license||'';$('#profileInsurance').value=state.profile.insurance||'';$('#profileInsuranceExpiry').value=state.profile.insuranceExpiry||'';}
-
-window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();state.deferredInstall=e;$('#installBtn').classList.remove('hidden');});
-$('#installBtn').addEventListener('click',async()=>{if(!state.deferredInstall)return;state.deferredInstall.prompt();await state.deferredInstall.userChoice;state.deferredInstall=null;$('#installBtn').classList.add('hidden');});
-window.addEventListener('appinstalled',()=>toast('Apunta i Dispara instal·lada'));
-if('serviceWorker' in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
-window.addEventListener('popstate',()=>go('home'));
-function boot(){renderStats();renderPoints();renderSpecies();renderSeason();renderDiary();loadProfile();go(state.screen);const current=species.filter(s=>isOpen(s)).length;$('#seasonSummary').textContent=`${current} espècies amb període hàbil avui`;}
-boot();
+(()=>{
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+const K='aid.v2';let S={profile:{},docs:[],weapons:[],ammo:[],days:[],points:[]};
+try{Object.assign(S,JSON.parse(localStorage.getItem(K)||'{}'))}catch(e){}
+const save=()=>{try{localStorage.setItem(K,JSON.stringify(S))}catch(e){toast("No s'ha pogut desar")}};
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('show');clearTimeout(toast.t);toast.t=setTimeout(()=>t.classList.remove('show'),2200)}
+const fd=d=>d?new Date(d+'T00:00').toLocaleDateString('ca',{day:'numeric',month:'short',year:'numeric'}):'';
+const val=id=>$(id).value.trim();
+const TR='<svg class="i"><use href="#trash"/></svg>';
+function go(n){$$('.screen').forEach(s=>s.classList.toggle('active',s.id==='screen-'+n));$$('.nav-item').forEach(b=>b.classList.toggle('active',b.dataset.screen===n));scrollTo(0,0);if(n==='map')initMap()}
+document.addEventListener('click',e=>{const g=e.target.closest('[data-go],[data-screen]');if(g)go(g.dataset.go||g.dataset.screen);
+const d=e.target.closest('[data-del]');if(d){const[k,i]=d.dataset.del.split(':');if(k==='points'&&mk[i])map.removeLayer(mk[i]);S[k].splice(+i,1);save();if(k==='points')S.points.forEach((_,j)=>{});render()}});
+// Caducitat
+function exp(d){if(!d)return'';const n=Math.ceil((new Date(d+'T00:00')-new Date().setHours(0,0,0,0))/864e5);
+return n<0?'<span class="badge bad">Caducat</span>':n<=30?`<span class="badge warn">Caduca en ${n} dies</span>`:`<span class="badge">Fins ${fd(d)}</span>`}
+const row=(k,i,h)=>`<div class="item"><div>${h}</div><button class="del" data-del="${k}:${i}" aria-label="Elimina">${TR}</button></div>`;
+// Temporada
+let flt='all';
+function season(){const q=val('#speciesSearch').toLowerCase();
+const l=SPECIES.filter(s=>(flt==='all'||s.t===flt)&&s.n.toLowerCase().includes(q));
+$('#seasonList').innerHTML=l.map(s=>`<div><span class="tag">${s.t==='major'?'Caça major':'Caça menor'}</span><h4>${esc(s.n)}</h4><p>${s.p?esc(s.p):'Consulta el període als quadres oficials.'}</p></div>`).join('')||'<p class="pad">Cap resultat.</p>'}
+$('#speciesSearch').oninput=season;
+$$('.filter').forEach(b=>b.onclick=()=>{flt=b.dataset.f;$$('.filter').forEach(x=>x.classList.toggle('active',x===b));season()});
+// Render general
+function render(){
+$('#statDays').textContent=S.days.length;$('#statCaptures').textContent=S.days.reduce((a,d)=>a+(+d.cap||0),0);
+$('#statKm').textContent=S.days.reduce((a,d)=>a+(+d.km||0),0).toFixed(1).replace('.',',');
+$('#seasonSummary').textContent=SPECIES.length+' espècies a la guia';
+$('#diaryEmpty').classList.toggle('hidden',S.days.length>0);
+$('#diaryList').innerHTML=[...S.days].map((d,i)=>[d,i]).sort((a,b)=>b[0].date.localeCompare(a[0].date)).map(([d,i])=>row('days',i,`<span class="tag">${esc(d.mode)}</span><h4>${esc(d.zone||'Sense zona')}</h4><div class="meta">${fd(d.date)} · ${d.cap} captures · ${d.km} km</div>${d.notes?`<p>${esc(d.notes)}</p>`:''}`)).join('');
+$('#pointsList').innerHTML=S.points.map((p,i)=>row('points',i,`<b>${esc(p.n)}</b><div class="meta">${p.lat.toFixed(5)}, ${p.lng.toFixed(5)}</div>`)).join('')||'<p class="pad">Encara no n\'hi ha cap.</p>';
+$('#docsList').innerHTML=S.docs.map((d,i)=>row('docs',i,`<b>${esc(d.name)}</b><div class="meta">${esc(d.num)}</div>${exp(d.exp)}`)).join('');
+$('#weaponsList').innerHTML=S.weapons.map((w,i)=>row('weapons',i,`<b>${esc(w.name)}</b><div class="meta">${esc(w.type)} · ${esc(w.cal)} ${esc(w.id)}</div>`)).join('');
+$('#ammoList').innerHTML=S.ammo.map((a,i)=>row('ammo',i,`<b>${esc(a.name)}</b><div class="meta">${esc(a.cal)} · ${a.qty} unitats</div>`)).join('')}
+// Diari
+const modal=$('#diaryModal');
+function openD(){$('#dDate').value=new Date().toISOString().slice(0,10);$('#dZone').value='';$('#dNotes').value='';$('#dCap').value=0;$('#dKm').value=+(S.lastKm||0).toFixed(1);modal.classList.remove('hidden')}
+$('#newDiaryBtn').onclick=$('#emptyNewDiary').onclick=openD;$('#closeDiary').onclick=()=>modal.classList.add('hidden');
+$('#saveDiaryBtn').onclick=()=>{if(!val('#dDate'))return toast('Posa una data');
+S.days.push({date:val('#dDate'),zone:val('#dZone'),mode:$('#dMode').value,cap:+$('#dCap').value||0,km:+$('#dKm').value||0,notes:val('#dNotes')});S.lastKm=0;save();modal.classList.add('hidden');render();toast('Jornada desada')};
+// Perfil
+const P=S.profile;[['#pName','name'],['#pLicense','lic'],['#pIns','ins'],['#pInsExp','insExp']].forEach(([id,k])=>$(id).value=P[k]||'');
+$('#saveProfileBtn').onclick=()=>{S.profile={name:val('#pName'),lic:val('#pLicense'),ins:val('#pIns'),insExp:val('#pInsExp')};save();toast('Perfil desat')};
+const add=(btn,k,get,need)=>$(btn).onclick=()=>{const o=get();if(!o[need])return toast('Omple el nom');S[k].push(o);save();render();toast('Afegit')};
+add('#addDocBtn','docs',()=>({name:val('#docName'),num:val('#docNumber'),exp:val('#docExpiry')}),'name');
+add('#addWeaponBtn','weapons',()=>({name:val('#wName'),type:$('#wType').value,cal:val('#wCal'),id:val('#wId')}),'name');
+add('#addAmmoBtn','ammo',()=>({name:val('#aName'),cal:val('#aCal'),qty:+$('#aQty').value||0}),'name');
+// Mapa
+let map,me,line,watch=null,pos=null,trk=0,last=null,wAt=0;const mk=[];
+const hav=(a,b)=>{const r=Math.PI/180,x=Math.sin((b.lat-a.lat)*r/2)**2+Math.cos(a.lat*r)*Math.cos(b.lat*r)*Math.sin((b.lng-a.lng)*r/2)**2;return 12742*Math.asin(Math.sqrt(x))};
+function initMap(){if(map)return setTimeout(()=>map.invalidateSize(),50);
+if(!window.L){$('#leafletMap').innerHTML='<p class="pad">El mapa necessita connexió la primera vegada.</p>';return}
+map=L.map('leafletMap').setView([41.7,1.7],8);L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:18,attribution:'© OpenStreetMap'}).addTo(map);
+line=L.polyline([],{color:'#ff6a1a',weight:4}).addTo(map);S.points.forEach(addMk)}
+function addMk(p){mk.push(L.marker([p.lat,p.lng]).addTo(map).bindPopup(esc(p.n)))}
+function setPos(c){pos={lat:c.latitude,lng:c.longitude};$('#gpsStatus').textContent='Posició obtinguda';
+$('#gpsCoords').textContent=`${pos.lat.toFixed(5)}, ${pos.lng.toFixed(5)} · ±${Math.round(c.accuracy)} m`;
+if(map){me?me.setLatLng(pos):me=L.circleMarker(pos,{radius:8,color:'#fff',fillColor:'#ff6a1a',fillOpacity:1}).addTo(map)}
+if(Date.now()-wAt>6e5){wAt=Date.now();weather()}}
+async function weather(){try{const r=await(await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${pos.lat}&longitude=${pos.lng}&current=temperature_2m,wind_speed_10m`)).json();
+$('#weatherText').textContent=`${Math.round(r.current.temperature_2m)} °C · vent ${Math.round(r.current.wind_speed_10m)} km/h`}catch(e){$('#weatherText').textContent='Sense dades de temps.'}}
+const gerr=()=>toast("No s'ha pogut obtenir la posició");
+$('#locateBtn').onclick=()=>navigator.geolocation?navigator.geolocation.getCurrentPosition(p=>{setPos(p.coords);initMap();map&&map.setView(pos,15)},gerr,{enableHighAccuracy:true,timeout:15000}):gerr();
+$('#trackBtn').onclick=()=>{const b=$('#trackBtn');if(watch!==null){navigator.geolocation.clearWatch(watch);watch=null;b.textContent='Iniciar recorregut';S.lastKm=(S.lastKm||0)+trk;save();toast(trk.toFixed(2)+' km recorreguts');return}
+if(!navigator.geolocation)return gerr();initMap();trk=0;last=null;line&&line.setLatLngs([]);b.textContent='Aturar recorregut';
+watch=navigator.geolocation.watchPosition(p=>{setPos(p.coords);if(last){const d=hav(last,pos);if(d>.01){trk+=d;last=pos;line&&line.addLatLng(pos)}}else{last=pos}},gerr,{enableHighAccuracy:true})};
+$('#savePointBtn').onclick=()=>{if(!pos)return toast("Ubica't primer");const n=prompt('Nom del punt','Punt '+(S.points.length+1));if(!n)return;const p={n,lat:pos.lat,lng:pos.lng};S.points.push(p);save();map&&addMk(p);render()};
+$('#shareLocationBtn').onclick=()=>navigator.geolocation?navigator.geolocation.getCurrentPosition(p=>{const u=`https://maps.google.com/?q=${p.coords.latitude},${p.coords.longitude}`;
+navigator.share?navigator.share({title:'La meva ubicació',url:u}).catch(()=>{}):navigator.clipboard.writeText(u).then(()=>toast('Enllaç copiat'))},gerr,{enableHighAccuracy:true}):gerr();
+render();season();
+if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
+})();
