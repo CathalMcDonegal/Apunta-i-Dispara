@@ -17,7 +17,7 @@
 <symbol id="chev" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></symbol>
 <symbol id="plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
 <symbol id="trash" viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></symbol>
-<symbol id="scale" viewBox="0 0 24 24"><path d="M12 3v18M5 7h14M5 7l-3 7a3 3 0 006 0zM19 7l-3 7a3 3 0 006 0z"/></symbol>
+<symbol id="paw" viewBox="0 0 24 24"><circle cx="7" cy="10" r="1.7"/><circle cx="11" cy="6" r="1.7"/><circle cx="16" cy="7" r="1.7"/><circle cx="19" cy="12" r="1.7"/><path d="M8 18c0-3 2-5 4-5s4 2 4 5-2 2-4 2-4 1-4-2z"/></symbol><symbol id="scale" viewBox="0 0 24 24"><path d="M12 3v18M5 7h14M5 7l-3 7a3 3 0 006 0zM19 7l-3 7a3 3 0 006 0z"/></symbol>
 </defs></svg>
 <div class="app-shell">
 <header class="topbar"><div class="brand-wrap"><img src="icon-192.png" alt="" class="brand-icon"><div><div class="eyebrow">Catalunya</div><h1>Apunta i Dispara</h1></div></div></header>
@@ -44,10 +44,10 @@
 <div class="weather-card"><div><b>Temps a la teva posició</b><small id="weatherText">Ubica't primer.</small></div></div>
 <div class="section-title"><h3>Punts guardats</h3></div><div id="pointsList" class="record-list"></div></section>
 <section id="screen-season" class="screen"><div class="screen-head"><div><span class="eyebrow">Calendari</span><h2>Temporada 2026–27</h2></div></div>
-<div class="notice"><b>Consulta sempre la font oficial</b><p>Les dates varien segons terreny, modalitat i autoritzacions (PTGC). Mira els <a href="https://agricultura.gencat.cat/ca/ambits/medi-natural/casa/guia-cacador/periodes-habils-caca/" target="_blank" rel="noopener" style="color:var(--blaze)">quadres oficials</a>.</p></div>
+<div class="notice"><b>Resolució ARP/2305/2026</b><p>Dates de caça general a Catalunya (modificada per ARP/3289/2026). Poden variar segons terreny i PTGC. Mira els <a href="https://agricultura.gencat.cat/ca/ambits/medi-natural/casa/guia-cacador/periodes-habils-caca/" target="_blank" rel="noopener" style="color:var(--blaze)">quadres oficials</a>.</p></div>
 <div class="search-box"><svg class="i"><use href="#target"/></svg><input id="speciesSearch" placeholder="Cerca una espècie…" autocomplete="off"></div>
-<div class="filter-row"><button class="filter active" data-f="all">Totes</button><button class="filter" data-f="major">Caça major</button><button class="filter" data-f="menor">Caça menor</button></div>
-<div id="seasonList" class="cards-list"></div></section>
+<div class="filter-row"><button class="filter active" data-f="all">Totes</button><button class="filter" data-f="major">Caça major</button><button class="filter" data-f="menor">Caça menor</button><button class="filter" data-f="open">Obertes ara</button></div>
+<div id="seasonList" class="cards-list"></div><p class="privacy-note">Fotos: Viquipèdia (Wikimedia Commons), segons llicència de cada imatge. Dates informatives: verifica-les sempre als quadres oficials.</p></section>
 <section id="screen-diary" class="screen"><div class="screen-head"><div><span class="eyebrow">Registre</span><h2>Diari de caça</h2></div><button id="newDiaryBtn" class="primary-btn"><svg class="i"><use href="#plus"/></svg> Nova</button></div>
 <div id="diaryList" class="diary-list"></div>
 <div id="diaryEmpty" class="empty-state"><h3>Encara no tens jornades</h3><p>Registra la primera i queda desada al teu dispositiu.</p><button class="primary-btn" id="emptyNewDiary">Crear jornada</button></div></section>

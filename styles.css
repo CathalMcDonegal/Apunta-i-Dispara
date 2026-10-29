@@ -153,3 +153,12 @@ input:focus,select:focus,textarea:focus{outline:0;border-color:var(--blaze)}
 .tag{font-size:.72rem;color:var(--moss);font-weight:700}
 .list-row>span .i,.quick-icon .i{width:1.25em;height:1.25em}
 .nav-item span{display:grid;place-items:center}
+.cards-list>.sp{padding:0;overflow:hidden}
+.sp-ph{position:relative;aspect-ratio:16/9;background:var(--card);display:grid;place-items:center;color:var(--line)}
+.sp-ph .i{width:48px;height:48px}.sp-ph img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.sp-b{padding:14px 16px 16px}.sp-h{display:flex;justify-content:space-between;align-items:center}
+.sp-b h4{font-size:1.35rem;margin:4px 0 8px}
+.per{color:var(--text)!important;font-size:.92rem!important;font-weight:600;padding:6px 0;border-top:1px solid var(--line)}
+.inf{margin-top:8px;font-size:.82rem!important}.inf b{color:var(--moss)}
+.badge.bad{background:var(--line);color:var(--muted)}
+.sp-h .badge{margin:0;background:var(--moss);color:#142010}.sp-h .badge.bad{background:var(--line);color:var(--muted)}

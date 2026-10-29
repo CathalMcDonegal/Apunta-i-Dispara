@@ -17,16 +17,23 @@ return n<0?'<span class="badge bad">Caducat</span>':n<=30?`<span class="badge wa
 const row=(k,i,h)=>`<div class="item"><div>${h}</div><button class="del" data-del="${k}:${i}" aria-label="Elimina">${TR}</button></div>`;
 // Temporada
 let flt='all';
+const today=()=>new Date().toISOString().slice(0,10);
+const isOpen=s=>s.per.some(p=>!p.x&&p.a<=today()&&today()<=p.b);
+const IC=(()=>{try{return JSON.parse(localStorage.getItem('aid.img')||'{}')}catch(e){return{}}})();
+async function photo(img){const w=img.dataset.w;let u=IC[w];
+if(!u){try{const r=await fetch('https://en.wikipedia.org/api/rest_v1/page/summary/'+encodeURIComponent(w));const j=await r.json();u=j.thumbnail&&j.thumbnail.source;if(u){IC[w]=u;try{localStorage.setItem('aid.img',JSON.stringify(IC))}catch(e){}}}catch(e){}}
+if(u){img.onerror=()=>img.classList.add('hidden');img.src=u;img.classList.remove('hidden')}}
 function season(){const q=val('#speciesSearch').toLowerCase();
-const l=SPECIES.filter(s=>(flt==='all'||s.t===flt)&&s.n.toLowerCase().includes(q));
-$('#seasonList').innerHTML=l.map(s=>`<div><span class="tag">${s.t==='major'?'Caça major':'Caça menor'}</span><h4>${esc(s.n)}</h4><p>${s.p?esc(s.p):'Consulta el període als quadres oficials.'}</p></div>`).join('')||'<p class="pad">Cap resultat.</p>'}
+const l=SPECIES.filter(s=>(flt==='all'||flt==='open'&&isOpen(s)||s.t===flt)&&s.n.toLowerCase().includes(q));
+$('#seasonList').innerHTML=l.map(s=>`<article class="sp"><div class="sp-ph"><svg class="i"><use href="#paw"/></svg><img data-w="${esc(s.w)}" alt="${esc(s.n)}" class="hidden" loading="lazy"></div><div class="sp-b"><div class="sp-h"><span class="tag">${s.t==='major'?'Caça major':'Caça menor'}</span><span class="badge ${isOpen(s)?'':'bad'}">${isOpen(s)?'Oberta ara':'Tancada ara'}</span></div><h4>${esc(s.n)}</h4>${s.per.map(p=>`<p class="per">${esc(p.l)}</p>`).join('')}<p class="inf"><b>Dies:</b> ${esc(s.dies)}</p>${s.nota?`<p class="inf">${esc(s.nota)}</p>`:''}</div></article>`).join('')||'<p class="pad">Cap resultat.</p>';
+$$('#seasonList img').forEach(photo)}
 $('#speciesSearch').oninput=season;
 $$('.filter').forEach(b=>b.onclick=()=>{flt=b.dataset.f;$$('.filter').forEach(x=>x.classList.toggle('active',x===b));season()});
 // Render general
 function render(){
 $('#statDays').textContent=S.days.length;$('#statCaptures').textContent=S.days.reduce((a,d)=>a+(+d.cap||0),0);
 $('#statKm').textContent=S.days.reduce((a,d)=>a+(+d.km||0),0).toFixed(1).replace('.',',');
-$('#seasonSummary').textContent=SPECIES.length+' espècies a la guia';
+$('#seasonSummary').textContent=SPECIES.filter(isOpen).length+' espècies obertes avui';
 $('#diaryEmpty').classList.toggle('hidden',S.days.length>0);
 $('#diaryList').innerHTML=[...S.days].map((d,i)=>[d,i]).sort((a,b)=>b[0].date.localeCompare(a[0].date)).map(([d,i])=>row('days',i,`<span class="tag">${esc(d.mode)}</span><h4>${esc(d.zone||'Sense zona')}</h4><div class="meta">${fd(d.date)} · ${d.cap} captures · ${d.km} km</div>${d.notes?`<p>${esc(d.notes)}</p>`:''}`)).join('');
 $('#pointsList').innerHTML=S.points.map((p,i)=>row('points',i,`<b>${esc(p.n)}</b><div class="meta">${p.lat.toFixed(5)}, ${p.lng.toFixed(5)}</div>`)).join('')||'<p class="pad">Encara no n\'hi ha cap.</p>';
