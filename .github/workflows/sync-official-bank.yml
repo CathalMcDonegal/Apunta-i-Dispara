@@ -13,6 +13,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Get published questionnaire snapshot
+        run: |
+          set -e
+          rm -rf official-bank
+          git clone --depth 1 https://github.com/Scully-lia/examen-licencias-armas-d-e.git /tmp/licencias-bank
+          mkdir -p official-bank
+          cp /tmp/licencias-bank/tema-{1,2,3,4,5,6,7}.md official-bank/
       - name: Build local official question bank
         run: node scripts/build-official-bank.mjs
       - name: Commit local question bank
