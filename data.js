@@ -24,3 +24,4 @@ window.SPECIES=[
 {n:"Ànec collverd",t:"menor",w:"Mallard",per:[{a:"2026-10-11",b:"2027-03-07",l:"Terres de l'Ebre: 11 oct 2026 – 7 març 2027"}],dies:"Terres de l'Ebre: règim especial fins a 3 dies/setmana + festius.",nota:"Fora de les Terres de l'Ebre, consulta el quadre oficial."},
 {n:"Guineu",t:"menor",w:"Red fox",per:[{a:"2026-09-06",b:"2027-03-28",l:"6 setembre 2026 – 28 març 2027"}],dies:"Règim especial: tots els dies (fora de les comarques de Lleida amb conill, on està prohibida).",nota:"Prohibida a les Garrigues, Pla d'Urgell, Segrià, Urgell, Segarra i part de la Noguera."}
 ];
+const _examScript=document.createElement('script');_examScript.src='exams.js?v=20261103';document.head.appendChild(_examScript);
