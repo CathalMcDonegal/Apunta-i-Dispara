@@ -20,13 +20,13 @@ jobs:
           git clone --depth 1 https://github.com/Scully-lia/examen-licencias-armas-d-e.git /tmp/licencias-bank
           mkdir -p official-bank
           cp /tmp/licencias-bank/tema-{1,2,3,4,5,6,7}.md official-bank/
-      - name: Build local official question bank
+      - name: Build local JSON snapshot
         run: node scripts/build-official-bank.mjs
       - name: Commit local question bank
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add official-bank.json
+          git add official-bank official-bank.json
           git diff --cached --quiet && exit 0
           git commit -m 'Add local official licence exam question bank'
           git push
