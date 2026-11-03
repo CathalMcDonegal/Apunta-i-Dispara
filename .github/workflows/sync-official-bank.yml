@@ -14,8 +14,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Build local bank from published questionnaire
-        shell: python
+        shell: bash
         run: |
+          python3 <<'PY'
           import json, re, urllib.request, pathlib
 
           base = 'https://raw.githubusercontent.com/Scully-lia/examen-licencias-armas-d-e/main/tema-{}.md'
@@ -30,7 +31,7 @@ jobs:
               num = None
 
               def flush():
-                  global current, options, correct, num
+                  nonlocal_dummy = None
                   if current and len(options) == 3 and correct in options:
                       bank.append({
                           'theme': theme,
@@ -39,25 +40,35 @@ jobs:
                           'options': [re.sub(r'\\s+', ' ', options[k]).strip() for k in 'ABC'],
                           'correct': 'ABC'.index(correct)
                       })
-                  current = None; options = {}; correct = None; num = None
+                  return None
 
               for raw in text.splitlines():
                   line = raw.strip()
                   m = re.match(r'^###\\s+(\\d+)\\.\\s+(.+)$', line)
                   if m:
-                      flush(); num = int(m.group(1)); current = m.group(2).strip(); continue
-                  m = re.match(r'^-\\s+(\\*\\*)?([ABC])\\)(?:\\*\\*)?\\s*(.+?)(?:\\s*\\*\\*\\s*)?(?:\\s*✅)?$', line)
+                      flush(); num = int(m.group(1)); current = m.group(2).strip(); options = {}; correct = None; continue
+                  m = re.match(r'^-\\s+(\\*\\*)?([ABC])\\)(?:\\*\\*)?\\s*(.+)$', line)
                   if m and current:
                       letter = m.group(2).upper()
-                      value = re.sub(r'^\\*+|\\*+$', '', m.group(3)).strip()
+                      value = m.group(3).strip()
+                      if value.startswith('**') and value.endswith('**'):
+                          value = value[2:-2].strip()
                       if '✅' in value:
                           correct = letter
-                          value = value.replace('✅','').strip()
+                          value = value.replace('✅','').replace('**','').strip()
                       options[letter] = value
                       continue
                   if current and not options and line and not line.startswith('##'):
                       current += ' ' + line
-              flush()
+
+              if current and len(options) == 3 and correct in options:
+                  bank.append({
+                      'theme': theme,
+                      'num': num,
+                      'question': re.sub(r'\\s+', ' ', current).strip(),
+                      'options': [re.sub(r'\\s+', ' ', options[k]).strip() for k in 'ABC'],
+                      'correct': 'ABC'.index(correct)
+                  })
 
               got = sum(1 for q in bank if q['theme'] == theme)
               if got != expected[theme-1]:
@@ -66,11 +77,9 @@ jobs:
           if len(bank) != sum(expected):
               raise SystemExit(f'Banc total: {len(bank)}; esperades {sum(expected)}')
 
-          pathlib.Path('official-bank.json').write_text(
-              json.dumps(bank, ensure_ascii=False, separators=(',',':')),
-              encoding='utf-8'
-          )
+          pathlib.Path('official-bank.json').write_text(json.dumps(bank, ensure_ascii=False, separators=(',',':')), encoding='utf-8')
           print(f'Generated {len(bank)} official questions')
+          PY
 
       - name: Commit local bank
         run: |
