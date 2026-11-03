@@ -1,13 +1,10 @@
-import { writeFile, mkdir } from 'node:fs/promises';
+import { readFile, writeFile } from 'node:fs/promises';
 
 const expected=[68,67,66,70,66,64,22];
 const bank=[];
 
 for(let theme=1; theme<=7; theme++){
-  const url=`https://raw.githubusercontent.com/Scully-lia/examen-licencias-armas-d-e/main/tema-${theme}.md`;
-  const res=await fetch(url);
-  if(!res.ok) throw new Error(`No se pudo descargar tema ${theme}: HTTP ${res.status}`);
-  const text=await res.text();
+  const text=await readFile(`official-bank/tema-${theme}.md`,'utf8');
   let current=null,num=null,options={},correct=-1;
   const push=()=>{
     if(current && options.A && options.B && options.C && correct>=0){
@@ -36,6 +33,5 @@ for(let theme=1; theme<=7; theme++){
 }
 
 if(bank.length!==423) throw new Error(`Banc total ${bank.length}; esperades 423`);
-await mkdir('official-bank',{recursive:true});
 await writeFile('official-bank.json',JSON.stringify(bank));
 console.log(`Generated ${bank.length} questions`);
